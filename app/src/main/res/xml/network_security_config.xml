@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- 
+    注意：此配置仅用于开发环境，允许信任所有证书
+    生产环境应该使用正确的证书或只信任特定域名
+    -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <!-- 信任系统预装的CA证书 -->
+            <certificates src="system" />
+            <!-- 信任用户安装的CA证书（仅用于开发环境） -->
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+    
+    <!-- 针对火山引擎API域名的特殊配置 -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">ark.cn-beijing.volces.com</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>
+
