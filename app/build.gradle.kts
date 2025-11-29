@@ -10,11 +10,11 @@ plugins {
 }
 
 android {
-    namespace = "com.bydance.myapplication"
+    namespace = "com.bytedance.myapplication"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.bydance.myapplication"
+        applicationId = "com.bytedance.myapplication"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -58,6 +58,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
 
+    implementation("androidx.navigation:navigation-compose:2.7.5") // 检查最新的稳定版本
     // ViewModel for Compose
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
 
@@ -72,6 +73,7 @@ dependencies {
     // Network - Retrofit & OkHttp
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     
