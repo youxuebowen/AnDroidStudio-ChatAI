@@ -3,6 +3,7 @@ package com.bytedance.myapplication.ui.components
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -10,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -27,14 +29,33 @@ fun OnboardingScreen(onLoginClick: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .systemBarsPadding() // 确保内容避开系统栏
+            .systemBarsPadding()
+            .clip(
+                RoundedCornerShape(
+                    topStart = 0.dp,    // 左上角：直角
+                    topEnd = 0.dp,      // 右上角：直角
+                    bottomEnd = 60.dp,  // 右下角：60dp圆角
+                    bottomStart = 60.dp // 左下角：60dp圆角
+                )
+            ),
     ) {
         // --- 顶部图片区域 (约占 50%-60% 高度) ---
         Box(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .weight(0.6f)
+//                .background(OrangePrimary) // 背景色为橙色
+//                .clip(MaterialTheme.shapes.large), // 设置为圆弧形
+//            contentAlignment = Alignment.Center
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(0.6f)
-                .background(OrangePrimary), // 背景色为橙色
+                .background(OrangePrimary)
+                // 自定义圆角大小（比如 20dp）
+                .clip(RoundedCornerShape(60.dp))
+            // 进阶：设置不同方向的圆角（比如仅左上和右下圆角）
+            // .clip(RoundedCornerShape(topStart = 30.dp, bottomEnd = 30.dp))
+            ,
             contentAlignment = Alignment.Center
         ) {
             // 模拟图片：网球运动员和熊猫
@@ -68,6 +89,7 @@ fun OnboardingScreen(onLoginClick: () -> Unit) {
                 .fillMaxWidth()
                 .weight(0.4f)
                 .padding(horizontal = 32.dp, vertical = 24.dp),
+
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(32.dp))

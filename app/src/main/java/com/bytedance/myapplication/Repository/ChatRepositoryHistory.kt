@@ -19,6 +19,10 @@ class ChatRepositoryHistory(private val chatDao: ChatDao) {
         val newSession = ChatSessionEntity(title = firstMessage,sessionId = sessionId)
         return chatDao.insertSession(newSession)
     }
+    suspend fun deleteSession(sessionId: Long) {
+        chatDao.deleteSession(sessionId)
+    }
+
 
     suspend fun saveMessage(sessionId: Long, messages: List<ChatMessage>) {
         for (message in messages) {

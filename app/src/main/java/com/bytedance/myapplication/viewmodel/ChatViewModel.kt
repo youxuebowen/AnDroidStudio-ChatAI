@@ -238,37 +238,39 @@ class ChatViewModel (
 //                sessionId?.let { repositoryHistory.saveMessage(sessionId, Message.User(text=text)) }
                 var accumulatedContent = ""
 
-                repositoryAi.streamChat(
-                    messages = updatedMessages, // 发送历史消息（包含刚添加的用户消息），后期需要思考，怎么样保存下来
-                ).collect { token ->
-                    /*collect会暂停当前协程，直到 streamChat 流发出第一个值。然后，它会为流中发出的每一个 token 执行 {} 中的代码块。
-                    token: 每次循环接收到的单个字符串片段（例如一个字或一个词）。*/
-                    //断点6：在这里设置断点，查看ViewModel接收到的每个token
-                    // 在Debugger中查看：
-                    //   - token: 单个token字符串
-                    //   - accumulatedContent: 累积的完整内容
-                    Log.d(
-                        "ChatViewModel",
-                        "收到Token: '$token', 累积内容长度: ${accumulatedContent.length}"
-                    )
+                // 使用一个可变字符串来累积内容，避免重复复制
+        val contentBuilder = StringBuilder()
+        
+        repositoryAi.streamChat(
+            messages = updatedMessages, // 发送历史消息（包含刚添加的用户消息）
+        ).collect { token ->
+            /*collect会暂停当前协程，直到 streamChat 流发出第一个值。然后，它会为流中发出的每一个 token 执行 {} 中的代码块。
+            token: 每次循环接收到的单个字符串片段（例如一个字或一个词）。*/
+            //断点6：在这里设置断点，查看ViewModel接收到的每个token
+            // 在Debugger中查看：
+            //   - token: 单个token字符串
+            //   - contentBuilder: 累积的完整内容
+            Log.d(
+                "ChatViewModel",
+                "收到Token: '$token', 累积内容长度: ${contentBuilder.length}"
+            )
 
-                    // 4. 实时更新流式内容
-                    accumulatedContent += token
-                    _state.value = _state.value.copy(
-                        streamingContent = accumulatedContent
-                    )
-
-                    // 5. 更新消息列表中的assistant消息内容（实时渲染）
-                    val updatedMessagesList = _state.value.currentMessages.map { msg ->
-                        if (msg.messageId == assistantMessageId) {
-                            msg.copy(text = accumulatedContent)
-                        } else {
-                            msg
-                        }
+            // 4. 实时更新流式内容（使用StringBuilder提高性能）
+            contentBuilder.append(token)
+            accumulatedContent = contentBuilder.toString()
+            
+            // 优化：一次性更新多个状态，减少状态更新次数
+            _state.value = _state.value.copy(
+                streamingContent = accumulatedContent,
+                // 5. 更新消息列表中的assistant消息内容（实时渲染）
+                currentMessages = _state.value.currentMessages.map { msg ->
+                    if (msg.messageId == assistantMessageId) {
+                        msg.copy(text = accumulatedContent)
+                    } else {
+                        msg
                     }
-                    _state.value = _state.value.copy(
-                        currentMessages = updatedMessagesList
-                    )
+                }
+            )
                 }
 
                 // 6. 流式接收完成，保存最终消息
@@ -364,19 +366,27 @@ class ChatViewModel (
     }
 
     private fun deleteSession(sessionId: Long) {
-        val updatedSessions = _state.value.sessions.filter { it.sessionID != sessionId }
-        val newCurrentId = if (_state.value.currentSessionId == sessionId) {
-            updatedSessions.firstOrNull()?.sessionID
-        } else {
-            _state.value.currentSessionId
-        }
+        viewModelScope.launch {
+            try {
+                repositoryHistory.deleteSession(
+                    sessionId = sessionId
+                )
+            }catch (e:Exception){
+                // 1. 打印异常核心信息到 Logcat
+                Log.e("ChatViewModel_SaveError", "异常类型：${e.javaClass.simpleName}") // 异常类型（如 SQLExeption）
+                Log.e("ChatViewModel_SaveError", "异常消息：${e.message ?: "无详细消息"}") // 异常描述（如“表不存在”）
+                Log.e("ChatViewModel_SaveError", "异常堆栈：", e) // 完整堆栈（关键！能定位到具体报错代码行）
 
-        _state.value = _state.value.copy(
-            sessions = updatedSessions,
-            currentSessionId = newCurrentId,
-            currentMessages = updatedSessions.find { it.sessionID == newCurrentId }?.messages
-                ?: emptyList()
-        )
+                // 2. 给用户友好提示（可根据异常类型定制）
+                val errorTip = when (e) {
+                    is SQLiteException -> "数据库操作失败，请检查表结构"
+                    is NullPointerException -> "参数为空，请重试"
+                    is IllegalStateException -> "数据库未初始化"
+                    else -> "聊天记录保存失败，请稍后重试"
+                }
+                _effect.emit(ChatEffect.ShowToast(errorTip))
+            }
+        }
     }
 
     private fun toggleDrawer() {
