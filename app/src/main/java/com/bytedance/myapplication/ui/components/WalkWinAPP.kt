@@ -10,10 +10,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.ScaleFactor
 import com.bytedance.myapplication.ui.ChatScreen
 import com.bytedance.myapplication.viewmodel.ChatViewModel
 import com.bytedance.myapplication.viewmodel.SplashViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.bytedance.myapplication.ui.ProjectScreen
+
 @Composable
 fun WalkWinApp(viewModel:ChatViewModel) {                                   // ← 这就是你的 App 启动后显示的所有界面
     val navController = rememberNavController()     // ← 导航控制器（相当于一个遥控器）
@@ -56,7 +59,10 @@ fun WalkWinApp(viewModel:ChatViewModel) {                                   // �
                 )
             }
             composable(Screen.Chat.route){
-                ChatScreen(viewModel = viewModel)
+                ChatScreen(viewModel = viewModel, navController = navController)
+            }
+            composable(Screen.Project.route){
+                ProjectScreen(chatViewModel= viewModel , navController = navController)
             }
             // 你以后还可以在下面继续加：
             // composable("home") { HomeScreen() }

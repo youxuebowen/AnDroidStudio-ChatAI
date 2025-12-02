@@ -7,6 +7,8 @@ ksp = "2.0.21-1.0.27"
 [libraries]
 
 [plugins]
+kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version = "2.0.0" }
+
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

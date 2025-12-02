@@ -5,16 +5,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
 import com.bytedance.myapplication.MVI.ChatEffect
 import com.bytedance.myapplication.MVI.ChatIntent
+import com.bytedance.myapplication.MVI.Screen
 import com.bytedance.myapplication.ui.components.*
 import com.bytedance.myapplication.viewmodel.ChatViewModel
 import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
-//    「变量声明 + 类型指定 + 赋值」语法
-    viewModel: ChatViewModel = viewModel()
+    viewModel: ChatViewModel = viewModel(),
+    navController: androidx.navigation.NavController
 ) {
     /*
     从 ViewModel 里实时收集 UI 状态（state 是 StateFlow）。
@@ -90,6 +92,9 @@ fun ChatScreen(
                             else drawerState.close()
 
                         }
+                    },
+                    onInfoClick = {
+                        navController.navigate(Screen.Project.route)
                     }
                 )
             },

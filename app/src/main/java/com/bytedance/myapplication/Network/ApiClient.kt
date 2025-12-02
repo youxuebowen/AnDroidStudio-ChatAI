@@ -18,6 +18,8 @@ object ApiClient {
     * 它负责将 Kotlin/Java 对象序列化成 JSON（用于请求体），
     * 并将服务器返回的 JSON 反序列化回 Kotlin/Java 对象（如 data class）*/
     private const val BASE_URL = "https://ark.cn-beijing.volces.com/api/v3/"
+    // 文章列表API的基础URL
+    private const val ARTICLE_BASE_URL = "http://8.130.154.167/"
 
 //    日志
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -81,6 +83,16 @@ object ApiClient {
         .build()
     
     val chatApiService: ChatApiService = retrofit.create(ChatApiService::class.java)
+    
+    // 创建文章API专用的Retrofit实例，使用不同的baseUrl
+    private val articleRetrofit = Retrofit.Builder()
+        .baseUrl(ARTICLE_BASE_URL)
+        .client(okHttpClient)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+    
+    // 文章API服务实例
+    val articleApiService: ArticleApiService = articleRetrofit.create(ArticleApiService::class.java)
 }
 
 
