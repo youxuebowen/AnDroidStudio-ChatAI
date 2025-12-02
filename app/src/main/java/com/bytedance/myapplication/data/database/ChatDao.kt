@@ -20,4 +20,8 @@ interface ChatDao {
 
     @Query("SELECT * FROM chat_sessions ORDER BY startTime DESC")
     fun getAllSessions(): Flow<List<ChatSessionEntity>>
+
+    @Query("DELETE FROM chat_sessions WHERE sessionId = :sessionId")
+    suspend fun deleteSession(sessionId: Long)
+
 }

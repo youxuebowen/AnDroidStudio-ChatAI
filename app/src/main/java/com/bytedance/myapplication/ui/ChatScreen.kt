@@ -113,6 +113,7 @@ fun ChatScreen(
             ChatMessageList(
                 messages = state.currentMessages,
                 sessionId = state.currentSessionId,
+//                viewModel = viewModel,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
