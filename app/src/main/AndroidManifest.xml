@@ -22,7 +22,7 @@
 <!--            android:label="@string/title_activity_main"-->
 <!--            android:theme="@style/Theme.MyApplication" />-->
         <activity
-            android:name="com.bytedance.myapplication.SplashActivity"
+            android:name="com.bytedance.myapplication.MainActivity"
             android:exported="true"
             android:label="@string/title_activity_main"
             android:theme="@style/Theme.MyApplication">
@@ -32,7 +32,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.bytedance.myapplication.MainActivity" android:exported="true"/>
+<!--        <activity android:name="com.bytedance.myapplication.MainActivity" android:exported="true"/>-->
     </application>
 
 </manifest>

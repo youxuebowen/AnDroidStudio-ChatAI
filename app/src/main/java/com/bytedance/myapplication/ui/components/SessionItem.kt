@@ -3,6 +3,7 @@ package com.bytedance.myapplication.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
@@ -30,7 +31,10 @@ fun SessionItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(backgroundColor)
+            .background(
+                color = backgroundColor,
+                shape = RoundedCornerShape(12.dp)
+            )
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically

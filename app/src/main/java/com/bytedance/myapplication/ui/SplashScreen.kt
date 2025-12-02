@@ -21,12 +21,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import com.bytedance.myapplication.MVI.SplashIntent
-import androidx.compose.foundation.layout.Column
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.bytedance.myapplication.R
+import com.bytedance.myapplication.ui.theme.OrangePrimary
+import com.bytedance.myapplication.ui.theme.PurpleGrey80
+
 @Composable
 fun SplashScreen(
-    viewModel: SplashViewModel,
+    viewModel: SplashViewModel = viewModel(),
     onFinished: () -> Unit,
-    logoResId: Int? = null // 如果你以后想放图片 logo，仍然可以传
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -59,38 +62,31 @@ fun SplashScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF7F7F7)),
-            contentAlignment = Alignment.Center
+                .background(OrangePrimary)
+                .alpha(alpha)
+                .scale(scale),
         ) {
+            // 图片位于屏幕正中央
+            Image(
+                painter = painterResource(id = R.drawable.splash),
+                contentDescription = "Logo",
+                modifier = Modifier
+                    .size(180.dp) // 您可以根据需要调整大小
+                    .align(Alignment.Center),
+                contentScale = ContentScale.Fit
+            )
 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center, // 垂直居中
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .alpha(alpha)
-                        .scale(scale)
-                ) {
-                    // 主标题：SoulSoul（可替换为图片）
-                    if (logoResId != null) {
-                        Image(
-                            painter = painterResource(id = logoResId),
-                            contentDescription = "Logo",
-                            modifier = Modifier
-                                .size(120.dp), // 根据实际素材调整大小
-                            contentScale = ContentScale.Fit
-                        )
-                    } else {
-                        Text(
-                            text = "SoulSoul",
-                            fontSize = 72.sp,               // 更大更醒目
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color(0xFFFF5500),
-                            letterSpacing = 2.sp             // 可选：让字距更开阔
-                        )
-                    }
-                }
-            }
+            // 文字位于屏幕下方
+            Text(
+                text = "SoulSoul",
+                fontSize = 48.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = PurpleGrey80,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 80.dp) // 与底部的距离
+            )
         }
+    }
 
 }

@@ -1,6 +1,7 @@
 package com.bytedance.myapplication.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -10,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.bytedance.myapplication.data.ChatSession
+import com.bytedance.myapplication.ui.theme.OrangePrimary
 
 @Composable
 fun DrawerContent(
@@ -28,8 +30,9 @@ fun DrawerContent(
     ) {
         // 头部 - 新建对话按钮
         Surface(
-            color = MaterialTheme.colorScheme.primaryContainer,
-            modifier = Modifier.fillMaxWidth()
+            color = OrangePrimary,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
         ) {
             Row(
                 modifier = Modifier
@@ -53,7 +56,8 @@ fun DrawerContent(
             }
         }
 
-        Divider()
+        // 移除分割线，因为圆弧已经有良好的视觉分隔
+        Spacer(modifier = Modifier.height(8.dp))
 
         // 会话列表
         LazyColumn(

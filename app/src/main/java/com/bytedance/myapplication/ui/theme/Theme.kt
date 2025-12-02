@@ -8,13 +8,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
+    primary = OrangePrimary,
+//    primary = Purple80,
     secondary = PurpleGrey80,
     tertiary = Pink80
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
+    primary = OrangePrimary,
     secondary = PurpleGrey40,
     tertiary = Pink40,
 
@@ -26,7 +27,14 @@ private val LightColorScheme = lightColorScheme(
     onBackground = Color(0xFF1C1B1F),
     onSurface = Color(0xFF1C1B1F),
 )
-
+private val WalkWinColorScheme = lightColorScheme(
+    primary = OrangePrimary,
+    onPrimary = Color.White,
+    background = BackgroundLight,
+    surface = Color.White,
+    onSurface = Color.Black,
+    onBackground = Color.Black
+)
 @Composable
 fun ChatAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -40,6 +48,16 @@ fun ChatAppTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        content = content
+    )
+}
+@Composable
+fun WalkWinTheme(
+    content: @Composable () -> Unit
+) {
+    MaterialTheme(
+        colorScheme = WalkWinColorScheme,
+        typography = Typography, // 假设您有标准的 Typography
         content = content
     )
 }

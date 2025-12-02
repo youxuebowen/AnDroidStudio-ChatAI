@@ -18,6 +18,8 @@ object ApiClient {
     * 它负责将 Kotlin/Java 对象序列化成 JSON（用于请求体），
     * 并将服务器返回的 JSON 反序列化回 Kotlin/Java 对象（如 data class）*/
     private const val BASE_URL = "https://ark.cn-beijing.volces.com/api/v3/"
+    // 文章列表API的基础URL
+    private const val ARTICLE_BASE_URL = "http://8.130.154.167/"
 
 //    日志
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -66,29 +68,6 @@ object ApiClient {
 
                 return@addInterceptor response // 必须将响应返回给下一个拦截器或 Retrofit
             }
-//            .addInterceptor { chain ->
-//                val original = chain.request() //获取拦截到的原始请求对象。
-//                val requestBuilder = original.newBuilder()
-//                    // 火山引擎API认证：根据实际API文档调整格式
-//                    // 如果是Bearer token格式，使用: .header("Authorization", "Bearer fefeb982-8d1a-428a-805f-f0e4318546f6")
-//                    // 如果是直接token，使用当前格式
-//                    .header("Authorization", "Bearer fefeb982-8d1a-428a-805f-f0e4318546f6")
-//                    .header("Content-Type", "application/json")
-//                    .header("Accept", "text/event-stream")
-////                    .build()
-//                val response = chain.proceed(requestBuilder.build())
-////                 val response = chain.proceed(requestBuilder)
-//
-//                if (response.isSuccessful) {
-//                    Log.d("HTTP", "请求成功，状态码 = ${response.code}")
-//                } else {
-//                    Log.e("HTTP", "请求失败，状态码 = ${response.code}")
-//                }
-//
-//
-//                val request = requestBuilder.build()
-//                chain.proceed(request)
-//            }
             .readTimeout(60, TimeUnit.SECONDS)
             .connectTimeout(60, TimeUnit.SECONDS)
             .build()
@@ -104,6 +83,16 @@ object ApiClient {
         .build()
     
     val chatApiService: ChatApiService = retrofit.create(ChatApiService::class.java)
+    
+    // 创建文章API专用的Retrofit实例，使用不同的baseUrl
+    private val articleRetrofit = Retrofit.Builder()
+        .baseUrl(ARTICLE_BASE_URL)
+        .client(okHttpClient)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+    
+    // 文章API服务实例
+    val articleApiService: ArticleApiService = articleRetrofit.create(ArticleApiService::class.java)
 }
 
 

@@ -21,5 +21,14 @@
             <certificates src="user" />
         </trust-anchors>
     </domain-config>
+    
+    <!-- 针对文章列表API域名的配置，允许明文HTTP流量 -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">http://8.130.154.167:18080/</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </domain-config>
 </network-security-config>
 

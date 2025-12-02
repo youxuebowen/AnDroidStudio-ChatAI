@@ -9,6 +9,11 @@ val Purple40 = Color(0xFF6650a4)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
+
+val OrangePrimary = Color(0xFFFB7E2E)
+val TextLight = Color(0xFF6A6A6A)
+val BackgroundLight = Color(0xFFFBF8F5)
+
 // 自定义颜色
 val ChatUserBubble = Color(0xFF6200EE)
 val ChatAIBubble = Color(0xFFE0F2F1)
