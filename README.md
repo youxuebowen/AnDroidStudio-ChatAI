@@ -90,7 +90,13 @@ com.bytedance.myapplication/
    - 加载历史消息
    - 支持会话内消息查询
 
-4. **用户界面**
+4. **项目收藏功能**
+   - 展示收藏的项目列表
+   - 项目卡片点击交互
+   - 项目URL自动填充到聊天界面
+   - 加载状态和错误处理
+
+5. **用户界面**
    - 现代化的聊天界面设计
    - 支持深色/浅色主题
    - 响应式布局，适配不同屏幕尺寸
@@ -112,6 +118,83 @@ com.bytedance.myapplication/
 2. ViewModel处理Intent，更新State
 3. Compose UI观察State变化并重新渲染
 4. 副作用通过Effect处理
+
+## 功能模块详解
+
+### 项目收藏模块 (ProjectScreen)
+
+项目收藏模块用于展示用户收藏的项目列表，并支持将项目信息快速传递到聊天界面进行AI分析。
+
+#### 核心实现 (ProjectScreen.kt)
+
+```kotlin
+@Composable
+fun ProjectScreen(
+    viewModel: ArticleViewModel = viewModel(),
+    chatViewModel: ChatViewModel = viewModel(),
+    navController: androidx.navigation.NavController
+) {
+    // 观察ViewModel中的projectState
+    val projectState by viewModel.projectState.collectAsState()
+    
+    // 屏幕加载时获取文章列表
+    LaunchedEffect(Unit) {
+        viewModel.loadArticles()
+    }
+
+    Scaffold(
+        topBar = { HeaderSection(count = projectState.projectList.size) { navController.navigate(Screen.Chat.route) } },
+        containerColor = BackgroundLight
+    ) {
+        // 加载状态显示
+        if (projectState.isLoading) {
+            // 显示加载指示器
+        } 
+        // 数据列表显示
+        else {
+            LazyColumn {
+                items(projectState.projectList) {
+                    ProjectCard(
+                        item = it,
+                        viewModel = viewModel,
+                        onConfirmSelect = { url ->
+                            // 将项目URL传递到聊天界面
+                            chatViewModel.handleIntent(ChatIntent.UpdateInputText(url + " 你是专业的数据分析师，访问该链接并总结该项目的创新点、主要内容"))
+                            navController.navigate(Screen.Chat.route)
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+```
+
+#### 主要功能
+
+1. **项目数据加载**
+   - 使用`LaunchedEffect`在组件初始化时调用`viewModel.loadArticles()`加载项目数据
+   - 通过`projectState.isLoading`监控加载状态，显示加载指示器
+
+2. **项目列表展示**
+   - 使用`LazyColumn`实现高效的项目列表滚动
+   - 每个项目使用`ProjectCard`组件进行展示
+
+3. **项目交互**
+   - 点击项目卡片触发`onConfirmSelect`回调
+   - 将项目URL与预设提示文本组合，通过`ChatViewModel`的`UpdateInputText`意图更新聊天输入框
+   - 自动导航回聊天界面，用户可直接发送分析请求
+
+4. **顶部导航栏**
+   - 显示"收藏项目"标题和项目数量
+   - 提供返回聊天界面的导航按钮
+
+#### 与其他模块的协作
+
+- **ArticleViewModel**: 负责项目数据的获取和状态管理
+- **ChatViewModel**: 接收项目URL并更新聊天输入内容
+- **ProjectCard**: 负责单个项目的UI展示和交互
+- **NavController**: 实现页面间的导航切换
 
 ## 开发环境要求
 
@@ -136,6 +219,56 @@ com.bytedance.myapplication/
 4. **高效的状态管理**: 使用MVI模式管理应用状态，使状态变化可预测
 5. **优化的性能**: 使用Kotlin协程处理异步操作，确保应用响应迅速
 
-## 许可证
+## 打包APK
 
-本项目采用MIT许可证，详情请参阅LICENSE文件。
+### 使用Android Studio GUI打包
+
+1. **打开项目**：使用Android Studio打开当前项目
+2. **选择打包选项**：点击顶部菜单栏的 `Build` → `Generate Signed Bundle / APK...`
+3. **选择APK类型**：在弹出的窗口中，选择 `APK` 并点击 `Next`
+4. **配置签名**：
+   - 如果没有密钥库，点击 `Create new...` 创建新的密钥库
+   - 如果已有密钥库，点击 `Choose existing...` 选择现有密钥库
+   - 填写密钥库信息（路径、密码、别名、别名密码等）
+5. **选择构建变体**：
+   - 选择 `Release` 或 `Debug` 构建类型
+   - 勾选 `V1 (Jar Signature)` 和 `V2 (Full APK Signature)` 签名版本
+6. **开始打包**：点击 `Finish` 按钮，等待构建完成
+7. **获取APK**：构建完成后，APK文件将保存在 `app/build/outputs/apk/` 目录下
+
+### 使用命令行打包
+
+1. **打开终端**：在项目根目录下打开终端
+2. **生成Debug APK**：
+   ```bash
+   ./gradlew assembleDebug
+   ```
+3. **生成Release APK**：
+   ```bash
+   ./gradlew assembleRelease
+   ```
+4. **获取APK**：
+   - Debug APK：`app/build/outputs/apk/debug/app-debug.apk`
+   - Release APK：`app/build/outputs/apk/release/app-release.apk`
+
+### 配置自动签名（可选）
+
+在 `app/build.gradle.kts` 文件中添加签名配置：
+
+```kotlin
+android {
+    signingConfigs {
+        create("release") {
+            storeFile = file("your-keystore.jks")
+            storePassword = "your-keystore-password"
+            keyAlias = "your-key-alias"
+            keyPassword = "your-key-password"
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig = signingConfigs["release"]
+            // 其他配置...
+        }
+    }
+}

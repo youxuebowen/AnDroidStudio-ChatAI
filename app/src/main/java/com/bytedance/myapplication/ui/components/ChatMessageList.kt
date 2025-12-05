@@ -86,7 +86,7 @@ fun ChatMessageList(
     LaunchedEffect(messages.size, messages.lastOrNull()?.text) {
         if (messages.isNotEmpty()) {
             // 使用延迟确保UI更新完成后再滚动
-            delay(16) // 16ms约等于一帧的时间
+            delay(8) // 16ms约等于一帧的时间
             try {
                 // 直接滚动到最后一项，不使用动画以提高性能
                 listState.scrollToItem(messages.size - 1)
