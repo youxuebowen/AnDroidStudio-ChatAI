@@ -13,7 +13,8 @@ data class ChatMessage(
     val text: String,
     val isFromUser: Boolean, // 保留用于UI显示
     val role: MessageRole = if (isFromUser) MessageRole.User else MessageRole.Assistant,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val isTyping: Boolean = false, // 添加打字状态字段
 ) {
     // 转换为API需要的格式
     fun toApiMessage(): Map<String, String> {
@@ -38,7 +39,8 @@ data class ChatMessage(
                 messageId = UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE,
                 text = content,
                 isFromUser = messageRole == MessageRole.User,
-                role = messageRole
+                role = messageRole,
+                isTyping = false // 初始化打字状态为false
             )
         }
     }

@@ -29,15 +29,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.res.painterResource
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bytedance.myapplication.R
+import com.bytedance.myapplication.viewmodel.ChatViewModel
 
 @Composable
 fun ChatMessageList(
     messages: List<ChatMessage>,
     sessionId: Long? = null, // 可空，默认无选中
     streamingMessageId: Long? = null, // 当前正在流式接收的消息ID
-    modifier: Modifier = Modifier,
-//    viewModel: ChatViewModel
+    viewModel: ChatViewModel,
+    modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -133,7 +135,7 @@ fun ChatMessageList(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(messages, key = { it.messageId }) { message ->
-            ChatMessageBubble(message, streamingMessageId)
+            ChatMessageBubble(message, streamingMessageId, viewModel)
         }
     }
 }

@@ -21,6 +21,9 @@ sealed class ChatIntent {
     /*删除一个聊天会话*/
     data class DeleteSession(val sessionId: Long) : ChatIntent()
     object ToggleDrawer : ChatIntent() //切换抽屉菜单
+    // 更新消息的打字状态
+    data class UpdateTypingStatus(val messageId: Long, val isTyping: Boolean) : ChatIntent()
+    data class UpdateisLoading(val isLoading: Boolean) : ChatIntent()
     // 你以后还可以继续加
 //    data object LoadHistory : ChatIntent()          // 无参数意图
 //    data class DeleteMessage(val id: Long) : ChatIntent()

@@ -18,11 +18,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bytedance.myapplication.data.ChatMessage
+import com.bytedance.myapplication.MVI.ChatIntent
+import com.bytedance.myapplication.viewmodel.ChatViewModel
 import kotlinx.coroutines.delay
 
 @Composable
-private fun AnimatedText(message: ChatMessage, streamingMessageId: Long?) {
+private fun AnimatedText(message: ChatMessage, streamingMessageId: Long?, viewModel: ChatViewModel) {
     // 为SSE流消息实现实时协同的打字机效果
     var displayedText by remember(message.messageId) {
         mutableStateOf(message.text)
@@ -36,6 +39,8 @@ private fun AnimatedText(message: ChatMessage, streamingMessageId: Long?) {
             // 用户消息直接显示完整内容
             displayedText = message.text
             isTyping = false
+            // 发送打字状态更新给ViewModel
+            viewModel.handleIntent(ChatIntent.UpdateTypingStatus(message.messageId, false))
         } else {
             // 只有当消息是当前正在流式接收的消息时，才应用打字机效果
             val isStreamingMessage = message.messageId == streamingMessageId
@@ -43,6 +48,8 @@ private fun AnimatedText(message: ChatMessage, streamingMessageId: Long?) {
             if (isStreamingMessage) {
                 // 当前正在接收的AI消息，应用打字机效果
                 isTyping = true
+                // 发送打字状态更新给ViewModel
+                viewModel.handleIntent(ChatIntent.UpdateTypingStatus(message.messageId, true))
                 
                 // 只显示新增加的字符，避免重复显示
                 val newChars = message.text.substring(displayedText.length)
@@ -62,12 +69,18 @@ private fun AnimatedText(message: ChatMessage, streamingMessageId: Long?) {
                     // 当消息内容不再变化时，结束打字状态
                     if (displayedText == message.text) {
                         isTyping = false
+                        viewModel.handleIntent(ChatIntent.UpdateisLoading(false))
+                        // 发送打字状态更新给ViewModel
+                        viewModel.handleIntent(ChatIntent.UpdateTypingStatus(message.messageId, isTyping = isTyping))
                     }
                 }
             } else {
                 // 历史AI消息，直接显示完整内容
                 displayedText = message.text
                 isTyping = false
+                viewModel.handleIntent(ChatIntent.UpdateisLoading(false))
+                // 发送打字状态更新给ViewModel
+                viewModel.handleIntent(ChatIntent.UpdateTypingStatus(message.messageId, false))
             }
         }
     }
@@ -85,7 +98,7 @@ private fun AnimatedText(message: ChatMessage, streamingMessageId: Long?) {
 }
 
 @Composable
-fun ChatMessageBubble(message: ChatMessage, streamingMessageId: Long? = null) {
+fun ChatMessageBubble(message: ChatMessage, streamingMessageId: Long? = null, viewModel: ChatViewModel) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (message.isFromUser) {
@@ -113,7 +126,7 @@ fun ChatMessageBubble(message: ChatMessage, streamingMessageId: Long? = null) {
             modifier = Modifier.widthIn(max = maxBubbleWidth)
         ) {
             // 打字机效果实现，传递streamingMessageId参数
-            AnimatedText(message = message, streamingMessageId = streamingMessageId)
+            AnimatedText(message = message, streamingMessageId = streamingMessageId, viewModel = viewModel )
         }
     }
 }

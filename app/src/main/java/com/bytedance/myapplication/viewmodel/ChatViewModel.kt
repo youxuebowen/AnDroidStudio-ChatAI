@@ -15,7 +15,12 @@ import com.bytedance.myapplication.Repository.ChatRepositoryAI
 import com.bytedance.myapplication.Repository.ChatRepositoryHistory
 import com.bytedance.myapplication.data.database.ChatMessageEntity
 import android.database.sqlite.SQLiteException
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.bytedance.myapplication.data.database.ChatSessionEntity
+import kotlinx.coroutines.delay
 
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -70,7 +75,25 @@ class ChatViewModel (
             text = this.text,
             isFromUser = MessageRole.User == this.sender,
             timestamp = this.timestamp,
-            role = this.sender
+            role = this.sender,
+            isTyping = false // 从数据库加载的消息默认不是打字状态
+        )
+    }
+    
+    private fun updateTypingStatus(messageId: Long, isTyping: Boolean) {
+        _state.value = _state.value.copy(
+            currentMessages = _state.value.currentMessages.map { msg ->
+                if (msg.messageId == messageId) {
+                    msg.copy(isTyping = isTyping)
+                } else {
+                    msg
+                }
+            }
+        )
+    }
+    private fun updateIsLoading(isLoading: Boolean){
+        _state.value = _state.value.copy(
+            isLoading = isLoading
         )
     }
 
@@ -96,6 +119,8 @@ class ChatViewModel (
             is ChatIntent.CreateNewSession -> createNewSession()
             is ChatIntent.DeleteSession -> deleteSession(intent.sessionId) //删除会话，需要绘画的ID
             is ChatIntent.ToggleDrawer -> toggleDrawer() //打开侧边栏
+            is ChatIntent.UpdateTypingStatus -> updateTypingStatus(intent.messageId, intent.isTyping)
+            is ChatIntent.UpdateisLoading -> updateIsLoading(intent.isLoading)
             else -> {}
         }
     }
@@ -215,6 +240,7 @@ class ChatViewModel (
 
         // 2. 创建assistant消息占位符（用于流式更新）
         val assistantMessageId = UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE
+        _state.value = _state.value.copy(streamingMessageId=assistantMessageId)
         val AssistantMessage = ChatMessage(
             messageId = assistantMessageId,
             text = "",
@@ -225,7 +251,7 @@ class ChatViewModel (
         val messagesWithPlaceholder = updatedMessages + AssistantMessage
         _state.value = _state.value.copy(
             currentMessages = messagesWithPlaceholder,
-            streamingMessageId = assistantMessageId,
+//            streamingMessageId = assistantMessageId,
             streamingContent = ""
         )
 
@@ -278,14 +304,32 @@ class ChatViewModel (
                     isFromUser = false,
                     role = MessageRole.Assistant
                 )
-
                 val finalMessages = updatedMessages + finalAssistantMessage
+//                var isTyping by remember(message.messageId) {
+//                    mutableStateOf(false)
+//                }
+//                when(){
+//
+//                }
+                val lastMessage = _state.value.currentMessages.lastOrNull()
+                lastMessage?.isTyping?.let {
+                    if (!it){
+                        _state.value = _state.value.copy(
+                            currentMessages = finalMessages,
+                            isLoading = false,
+                            streamingMessageId = null,
+                            streamingContent = ""
+                        )
+                    }
+                }
 //                _state.value = _state.value.copy(
 //                    currentMessages = finalMessages,
 //                    isLoading = false,
 //                    streamingMessageId = null,
 //                    streamingContent = ""
 //                )
+
+
 
                 // 7. 更新会话消息（持久化存储）
                 updateSessionMessages(sessionId, finalMessages)
@@ -346,9 +390,10 @@ class ChatViewModel (
 
 
     private fun createNewSession() {
+        val sessionID = UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE
         val newSession = ChatSession(
 //            id = UUID.randomUUID().toString(),
-            sessionID = UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE,
+            sessionID = sessionID,
             title = "新对话",
 //            lastMessage = "",
             startTime = System.currentTimeMillis(),
