@@ -113,6 +113,7 @@ fun ChatScreen(
             ChatMessageList(
                 messages = state.currentMessages,
                 sessionId = state.currentSessionId,
+                streamingMessageId = state.streamingMessageId,
 //                viewModel = viewModel,
                 modifier = Modifier
                     .fillMaxSize()

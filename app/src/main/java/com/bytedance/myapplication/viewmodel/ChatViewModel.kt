@@ -236,58 +236,56 @@ class ChatViewModel (
         viewModelScope.launch {
             try {
 //                sessionId?.let { repositoryHistory.saveMessage(sessionId, Message.User(text=text)) }
-                var accumulatedContent = ""
-
-                // 使用一个可变字符串来累积内容，避免重复复制
-        val contentBuilder = StringBuilder()
-        
-        repositoryAi.streamChat(
-            messages = updatedMessages, // 发送历史消息（包含刚添加的用户消息）
-        ).collect { token ->
-            /*collect会暂停当前协程，直到 streamChat 流发出第一个值。然后，它会为流中发出的每一个 token 执行 {} 中的代码块。
-            token: 每次循环接收到的单个字符串片段（例如一个字或一个词）。*/
-            //断点6：在这里设置断点，查看ViewModel接收到的每个token
-            // 在Debugger中查看：
-            //   - token: 单个token字符串
-            //   - contentBuilder: 累积的完整内容
-            Log.d(
-                "ChatViewModel",
-                "收到Token: '$token', 累积内容长度: ${contentBuilder.length}"
-            )
-
-            // 4. 实时更新流式内容（使用StringBuilder提高性能）
-            contentBuilder.append(token)
-            accumulatedContent = contentBuilder.toString()
-            
-            // 优化：一次性更新多个状态，减少状态更新次数
-            _state.value = _state.value.copy(
-                streamingContent = accumulatedContent,
-                // 5. 更新消息列表中的assistant消息内容（实时渲染）
-                currentMessages = _state.value.currentMessages.map { msg ->
-                    if (msg.messageId == assistantMessageId) {
-                        msg.copy(text = accumulatedContent)
-                    } else {
-                        msg
-                    }
-                }
-            )
+                repositoryAi.streamChat(
+                    messages = updatedMessages, // 发送历史消息（包含刚添加的用户消息）
+                ).collect { token ->
+                    /*collect会暂停当前协程，直到 streamChat 流发出第一个值。然后，它会为流中发出的每一个 token 执行 {} 中的代码块。
+                    token: 每次循环接收到的单个字符串片段（例如一个字或一个词）。*/
+                    //断点6：在这里设置断点，查看ViewModel接收到的每个token
+                    // 在Debugger中查看：
+                    //   - token: 单个token字符串
+                    
+                    // 4. 实时更新流式内容，实现打字效果
+                    _state.value = _state.value.copy(
+                        // 5. 直接将token添加到当前消息中，实现打字效果
+                        currentMessages = _state.value.currentMessages.map { msg ->
+                            if (msg.messageId == assistantMessageId) {
+                                // 将新收到的token直接添加到现有消息内容的末尾
+                                msg.copy(text = msg.text + token)
+                            } else {
+                                msg
+                            }
+                        }
+                    )
+                    
+                    // 记录token信息
+                    val currentAssistantMessage = _state.value.currentMessages.find { it.messageId == assistantMessageId }
+                    Log.d(
+                        "ChatViewModel",
+                        "收到Token: '$token', 当前消息长度: ${currentAssistantMessage?.text?.length ?: 0}"
+                    )
                 }
 
                 // 6. 流式接收完成，保存最终消息
+                // 从当前消息列表中获取完整的助手消息内容
+                val assistantMessageContent = _state.value.currentMessages.find { 
+                    it.messageId == assistantMessageId 
+                }?.text ?: ""
+                
                 val finalAssistantMessage = ChatMessage(
                     messageId = assistantMessageId,
-                    text = accumulatedContent,
+                    text = assistantMessageContent,
                     isFromUser = false,
                     role = MessageRole.Assistant
                 )
 
                 val finalMessages = updatedMessages + finalAssistantMessage
-                _state.value = _state.value.copy(
-                    currentMessages = finalMessages,
-                    isLoading = false,
-                    streamingMessageId = null,
-                    streamingContent = ""
-                )
+//                _state.value = _state.value.copy(
+//                    currentMessages = finalMessages,
+//                    isLoading = false,
+//                    streamingMessageId = null,
+//                    streamingContent = ""
+//                )
 
                 // 7. 更新会话消息（持久化存储）
                 updateSessionMessages(sessionId, finalMessages)

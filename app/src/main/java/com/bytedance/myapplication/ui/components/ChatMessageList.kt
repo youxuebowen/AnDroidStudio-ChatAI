@@ -35,6 +35,7 @@ import com.bytedance.myapplication.R
 fun ChatMessageList(
     messages: List<ChatMessage>,
     sessionId: Long? = null, // 可空，默认无选中
+    streamingMessageId: Long? = null, // 当前正在流式接收的消息ID
     modifier: Modifier = Modifier,
 //    viewModel: ChatViewModel
 ) {
@@ -86,7 +87,7 @@ fun ChatMessageList(
     LaunchedEffect(messages.size, messages.lastOrNull()?.text) {
         if (messages.isNotEmpty()) {
             // 使用延迟确保UI更新完成后再滚动
-            delay(8) // 16ms约等于一帧的时间
+            delay(16) // 16ms约等于一帧的时间
             try {
                 // 直接滚动到最后一项，不使用动画以提高性能
                 listState.scrollToItem(messages.size - 1)
@@ -132,7 +133,7 @@ fun ChatMessageList(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(messages, key = { it.messageId }) { message ->
-            ChatMessageBubble(message)
+            ChatMessageBubble(message, streamingMessageId)
         }
     }
 }
