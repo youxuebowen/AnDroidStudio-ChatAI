@@ -16,64 +16,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import com.bytedance.myapplication.data.ChatMessage
 import kotlinx.coroutines.delay
 
 @Composable
 private fun AnimatedText(message: ChatMessage) {
-    // 对AI回复使用打字机效果，对用户消息直接显示全部内容
-    if (message.isFromUser) {
-        Text(
-            text = message.text,
-            modifier = Modifier.padding(12.dp),
-            color = MaterialTheme.colorScheme.onPrimary,
-            style = MaterialTheme.typography.bodyLarge
-        )
-        return
-    }
-    
-    // 只对AI消息应用打字机效果
-    // 使用rememberSaveable确保在配置更改时保持状态
-    var displayedText by remember { mutableStateOf("") }
-    var currentIndex by remember { mutableStateOf(0) }
-    
-    // 根据文本长度动态调整打字速度
-    val typingDelay = when {
-        message.text.length > 500 -> 5 // 长文本时更快
-        message.text.length > 200 -> 10
-        message.text.length > 50 -> 20
-        else -> 30 // 短文本时更慢，体验更好
-    }
-    
-    // 关键改进：当message.text更新时，保留当前显示的内容，继续显示新增部分
-    LaunchedEffect(message.text) {
-        // 如果内容被更新（流式API返回更多内容），但当前显示的内容是message.text的前缀
-        // 则从当前位置继续显示
-        if (message.text.startsWith(displayedText) && currentIndex <= message.text.length) {
-            // 继续显示剩余内容
-            while (currentIndex < message.text.length) {
-                displayedText = message.text.substring(0, currentIndex + 1)
-                currentIndex++
-                delay(typingDelay.toLong())
-            }
-        } else {
-            // 如果内容不是前缀（例如全新消息或内容被替换），则重新开始
-            displayedText = ""
-            currentIndex = 0
-            while (currentIndex < message.text.length) {
-                displayedText = message.text.substring(0, currentIndex + 1)
-                currentIndex++
-                delay(typingDelay.toLong())
-            }
-        }
-    }
-    
-    // 显示动画文本
+    // 直接显示完整的消息内容，关闭打字机效果
     Text(
-        text = displayedText,
+        text = message.text,
         modifier = Modifier.padding(12.dp),
-        color = MaterialTheme.colorScheme.onSecondaryContainer,
+        color = if (message.isFromUser) {
+            MaterialTheme.colorScheme.onPrimary
+        } else {
+            MaterialTheme.colorScheme.onSecondaryContainer
+        },
         style = MaterialTheme.typography.bodyLarge
     )
 }
@@ -88,7 +46,11 @@ fun ChatMessageBubble(message: ChatMessage) {
             Arrangement.Start
         }
     ) {
-        Surface(
+        // 获取屏幕宽度，让消息占更大比例
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val maxBubbleWidth = screenWidth * 0.9f // 消息最大宽度为屏幕宽度的80%
+    
+    Surface(
             shape = RoundedCornerShape(
                 topStart = 16.dp,
                 topEnd = 16.dp,
@@ -100,7 +62,7 @@ fun ChatMessageBubble(message: ChatMessage) {
             } else {
                 MaterialTheme.colorScheme.secondaryContainer
             },
-            modifier = Modifier.widthIn(max = 280.dp)
+            modifier = Modifier.widthIn(max = maxBubbleWidth)
         ) {
             // 打字机效果实现
             AnimatedText(message = message)

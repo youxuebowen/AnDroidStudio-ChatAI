@@ -11,6 +11,8 @@ plugins {
 }
 
 android {
+    
+
     namespace = "com.bytedance.myapplication"
     compileSdk = 34
 
@@ -41,6 +43,18 @@ android {
 //    ksp {
 //        jvmTarget = "17"
 //    }
+    
+    // 自定义APK文件名
+    applicationVariants.all {
+        val variantName = name
+        val versionName = versionName
+        val versionCode = versionCode
+        outputs.all {
+            if (this is com.android.build.gradle.internal.api.ApkVariantOutputImpl) {
+                this.outputFileName = "万博闻-Chatbot.apk"
+            }
+        }
+    }
 }
 
 dependencies {
