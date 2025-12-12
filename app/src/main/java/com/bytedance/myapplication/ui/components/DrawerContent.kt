@@ -59,11 +59,13 @@ fun DrawerContent(
         // 移除分割线，因为圆弧已经有良好的视觉分隔
         Spacer(modifier = Modifier.height(8.dp))
 
-        // 会话列表
+        // 会话列表，采用懒加载方式渲染会话列表，只渲染当前可见区域的会话项，提高性能
         LazyColumn(
             modifier = Modifier.weight(1f),
+            //为列表添加垂直方向的8dp内边距，优化视觉效果
             contentPadding = PaddingValues(vertical = 8.dp)
         ) {
+            //遍历 sessions 列表，为每个会话创建一个 SessionItem 组件
             items(sessions, key = { it.sessionID }) { session ->
                 SessionItem(
                     session = session,

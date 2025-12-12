@@ -1,9 +1,6 @@
 package com.bytedance.myapplication.viewmodel
 
-import android.R
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bytedance.myapplication.Network.Article
@@ -33,17 +30,6 @@ class ArticleViewModel : ViewModel() {
     private val _projectState = MutableStateFlow(ProjectState(currentArticle = null))
     val projectState: StateFlow<ProjectState> = _projectState.asStateFlow()
 
-    // 选中状态管理
-//    private val _selectedArticleId = MutableStateFlow<String?>(null)
-//    val selectedArticleId: StateFlow<String?> = _selectedArticleId.asStateFlow()
-//
-//    // 对话框显示状态
-//    private val _showDialog = MutableStateFlow(false)
-//    val showDialog: StateFlow<Boolean> = _showDialog.asStateFlow()
-//
-//    // 当前选中的文章
-//    private val _currentArticle = MutableStateFlow<Article?>(null)
-//    val currentArticle: StateFlow<Article?> = _currentArticle.asStateFlow()
 
     /**
      * 加载文章列表数据，不用Intent了
@@ -103,12 +89,12 @@ class ArticleViewModel : ViewModel() {
      * @return 当前选中文章的URL，如果没有选中则返回null
      */
     fun confirmSelection(): String? {
-        val url = (_projectState.value.currentArticle?.url ?: String())
+        val content = (_projectState.value.currentArticle?.content ?: String())
         _projectState.update { it.copy(selectedArticleId = "") }
         _projectState.update { it.copy(currentArticle = null) }
         _projectState.update { it.copy(showDialog = false) }
 
             // 重置状态
-        return url
+        return content
     }
 }

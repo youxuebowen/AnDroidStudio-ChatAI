@@ -63,7 +63,7 @@ private fun AnimatedText(message: ChatMessage, streamingMessageId: Long?, viewMo
                     
                     for (char in newChars) {
                         displayedText += char
-                        delay((speedInSeconds * 10).toLong()) // 转换为毫秒
+                        delay((speedInSeconds * 20).toLong()) // 转换为毫秒
                     }
                     
                     // 当消息内容不再变化时，结束打字状态

@@ -85,9 +85,9 @@ fun ProjectScreen(
                             ProjectCard(
                                 item = it,
                                 viewModel = viewModel,
-                                onConfirmSelect = { url ->
+                                onConfirmSelect = { content ->
                                     // 当用户确认选择后，更新ChatState的inputText
-                                    chatViewModel.handleIntent(ChatIntent.UpdateInputText(url+ "你是专业的数据分析师，访问该链接并总结该项目的创新点、主要内容"))
+                                    chatViewModel.handleIntent(ChatIntent.UpdateInputText(content+ "你是专业的数据分析师，分析输入的内容"))
                                     // 导航回聊天页面
                                     navController.navigate(Screen.Chat.route)
                                 }
