@@ -95,8 +95,13 @@ fun ChatScreen(
                     },
                     onInfoClick = {
                         navController.navigate(Screen.Project.route)
+                    },
+                    onEnglishClick = {
+                        navController.navigate(Screen.English.route)
                     }
                 )
+
+
             },
             bottomBar = {
                 ChatInputBar(
@@ -113,7 +118,8 @@ fun ChatScreen(
             ChatMessageList(
                 messages = state.currentMessages,
                 sessionId = state.currentSessionId,
-//                viewModel = viewModel,
+                streamingMessageId = state.streamingMessageId,
+                viewModel = viewModel,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)

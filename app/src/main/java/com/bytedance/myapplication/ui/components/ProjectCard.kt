@@ -61,13 +61,26 @@ fun ProjectCard(item: Article, viewModel: ArticleViewModel, onConfirmSelect: (St
                 Spacer(modifier = Modifier.height(6.dp))
 
                 // URL 显示 (灰色，单行，过长省略)
-                Text(
-                    text = item.url as String,
-                    fontSize = 14.sp,
-                    color = Color.Gray,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                val contentText = item.content as? String
+                if (!contentText.isNullOrEmpty()) {
+                    Text(
+                        text = contentText,
+                        fontSize = 14.sp,
+                        color = Color.Gray,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+//                Spacer(modifier = Modifier.height(6.dp))
+//                // URL 显示 (灰色，单行，过长省略)
+//                Text(
+//                    text = item.url as String,
+//                    fontSize = 14.sp,
+//                    color = Color.Gray,
+//                    maxLines = 1,
+//                    overflow = TextOverflow.Ellipsis
+//                )
             }
 
             // 添加Checkbox选项框
@@ -118,10 +131,10 @@ fun ProjectCard(item: Article, viewModel: ArticleViewModel, onConfirmSelect: (St
                 Button(
                     onClick = {
                         // 确认选中并获取URL
-                        val url = viewModel.confirmSelection()
-                        if (url != null) {
+                        val content = viewModel.confirmSelection()
+                        if (content != null) {
                             // 回调通知上层组件处理URL
-                            onConfirmSelect(url)
+                            onConfirmSelect(content)
                         }
                     }
                 ) {

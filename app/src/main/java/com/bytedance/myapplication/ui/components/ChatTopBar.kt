@@ -22,7 +22,7 @@ import com.bytedance.myapplication.ui.theme.*
 //@OptIn(...) 就是告诉编译器：“我知道这个 API 是实验性的，自愿使用它”，不加这个注解会报错；
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatTopBar(onMenuClick: () -> Unit, onInfoClick: () -> Unit) {
+fun ChatTopBar(onMenuClick: () -> Unit, onInfoClick: () -> Unit, onEnglishClick: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
         shadowElevation = 8.dp
@@ -31,12 +31,15 @@ fun ChatTopBar(onMenuClick: () -> Unit, onInfoClick: () -> Unit) {
             title = { Text("SoulSoul", color = MaterialTheme.colorScheme.onPrimary) },
             navigationIcon = {
                 IconButton(onClick = onMenuClick) {
-                    Icon(Icons.Default.Menu, contentDescription = "菜单", tint = MaterialTheme.colorScheme.onPrimary)
+                    Icon(Icons.Default.Menu, contentDescription = "历史", tint = MaterialTheme.colorScheme.onPrimary)
                 }
             },
             actions = {
                 IconButton(onClick = onInfoClick) {
-                    Icon(painter = painterResource(id = R.drawable.ic_project), contentDescription = "详情", tint = MaterialTheme.colorScheme.onPrimary)
+                    Icon(painter = painterResource(id = R.drawable.ic_project), contentDescription = "项目", tint = MaterialTheme.colorScheme.onPrimary)
+                }
+                IconButton(onClick = onEnglishClick) {
+                    Icon(painter = painterResource(id = R.drawable.icon_cammera), contentDescription = "英语", tint = MaterialTheme.colorScheme.onPrimary)
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(

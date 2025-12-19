@@ -29,7 +29,13 @@ data class ChatState(
     /*制侧边栏的显示 / 隐藏（true 打开，false 关闭）。*/
     val isDrawerOpen: Boolean = false,                      // 新增
     val streamingMessageId: Long? = null,                // 正在流式接收的消息ID
-    val streamingContent: String = ""                      // 正在流式接收的内容（临时）
+    val streamingContent: String = ""  ,
+    val isTyping: Boolean = false,
+    // 图像生成相关状态
+    val isGeneratingImage: Boolean = false,               // 是否正在生成图像
+    val generatedImageUrl: String? = null,                // 生成的图像URL
+    val imageGenerationError: String? = null              // 图像生成错误信息
+    // 正在流式接收的内容（临时）
 )
 /*新增的 sessions 和 currentSessionId 是为了实现 “多会话切换”
 （比如用户可以创建多个聊天窗口，切换不同的对话），

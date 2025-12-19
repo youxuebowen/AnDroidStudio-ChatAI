@@ -15,7 +15,12 @@ import com.bytedance.myapplication.Repository.ChatRepositoryAI
 import com.bytedance.myapplication.Repository.ChatRepositoryHistory
 import com.bytedance.myapplication.data.database.ChatMessageEntity
 import android.database.sqlite.SQLiteException
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.bytedance.myapplication.data.database.ChatSessionEntity
+import kotlinx.coroutines.delay
 
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -70,7 +75,25 @@ class ChatViewModel (
             text = this.text,
             isFromUser = MessageRole.User == this.sender,
             timestamp = this.timestamp,
-            role = this.sender
+            role = this.sender,
+            isTyping = false // 从数据库加载的消息默认不是打字状态
+        )
+    }
+    
+    private fun updateTypingStatus(messageId: Long, isTyping: Boolean) {
+        _state.value = _state.value.copy(
+            currentMessages = _state.value.currentMessages.map { msg ->
+                if (msg.messageId == messageId) {
+                    msg.copy(isTyping = isTyping)
+                } else {
+                    msg
+                }
+            }
+        )
+    }
+    private fun updateIsLoading(isLoading: Boolean){
+        _state.value = _state.value.copy(
+            isLoading = isLoading
         )
     }
 
@@ -96,6 +119,11 @@ class ChatViewModel (
             is ChatIntent.CreateNewSession -> createNewSession()
             is ChatIntent.DeleteSession -> deleteSession(intent.sessionId) //删除会话，需要绘画的ID
             is ChatIntent.ToggleDrawer -> toggleDrawer() //打开侧边栏
+            is ChatIntent.UpdateTypingStatus -> updateTypingStatus(intent.messageId, intent.isTyping)
+            is ChatIntent.UpdateisLoading -> updateIsLoading(intent.isLoading)
+            // 图像生成相关意图处理
+            is ChatIntent.GenerateImage -> generateImage(intent.prompt)
+            is ChatIntent.UpdateImageGenerationResult -> updateImageGenerationResult(intent.imageUrl)
             else -> {}
         }
     }
@@ -162,6 +190,125 @@ class ChatViewModel (
             )
         }*/
     }
+
+    private fun generateImage(prompt: String) {
+        if (prompt.isBlank()) {
+            viewModelScope.launch {
+                _effect.emit(ChatEffect.ShowToast("图像生成提示不能为空"))
+            }
+            return
+        }
+
+        // 如果正在加载中，忽略新请求
+        if (_state.value.isGeneratingImage) {
+            return
+        }
+
+        var sessionId = _state.value.currentSessionId
+
+        if (sessionId == null) {
+            createNewSession()
+            sessionId = _state.value.currentSessionId!!
+        }
+
+        // 1. 添加用户图像生成请求到历史记录
+        val userMessage = ChatMessage(
+            messageId = UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE,
+            text = prompt,
+            isFromUser = true,
+            role = MessageRole.User
+        )
+
+        val updatedMessages = _state.value.currentMessages + userMessage
+        _state.value = _state.value.copy(
+            currentMessages = updatedMessages,
+            isGeneratingImage = true
+        )
+
+        updateSessionMessages(sessionId, updatedMessages)
+
+        // 2. 创建assistant消息占位符
+        val assistantMessageId = UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE
+        val assistantMessage = ChatMessage(
+            messageId = assistantMessageId,
+            text = "",
+            isFromUser = false,
+            role = MessageRole.Assistant
+        )
+
+        val messagesWithPlaceholder = updatedMessages + assistantMessage
+        _state.value = _state.value.copy(
+            currentMessages = messagesWithPlaceholder
+        )
+
+        // 3. 调用图像生成API
+        viewModelScope.launch {
+            try {
+                val imageResponse = repositoryAi.generateImage(prompt)
+                
+                // 4. 生成结果处理
+                val imageUrl = imageResponse.data.firstOrNull()?.url
+                
+                // 更新助手消息为图像URL
+                val finalAssistantMessage = assistantMessage.copy(
+                    text = imageUrl ?: "图像生成失败，未返回URL"
+                )
+                
+                val finalMessages = updatedMessages + finalAssistantMessage
+                _state.value = _state.value.copy(
+                    currentMessages = finalMessages,
+                    isGeneratingImage = false,
+                    generatedImageUrl = imageUrl
+                )
+
+                // 5. 更新会话消息（持久化存储）
+                updateSessionMessages(sessionId, finalMessages)
+                saveMessage(sessionId, finalMessages)
+
+            } catch (e: ChatApiException) {
+                // API调用失败
+                e.printStackTrace()
+                viewModelScope.launch {
+                    _effect.emit(ChatEffect.ShowToast("图像生成失败: ${e.message}"))
+                }
+
+                // 移除占位符消息
+                _state.value = _state.value.copy(
+                    currentMessages = updatedMessages,
+                    isGeneratingImage = false,
+                    imageGenerationError = e.message
+                )
+            } catch (e: Exception) {
+                // 其他异常
+                Log.e("ChatViewModel", "图像生成时发生异常", e)
+                
+                val errorMsg = when {
+                    e.message?.contains("Unable to resolve host") == true -> "网络连接失败，请检查网络"
+                    e.message?.contains("timeout") == true -> "请求超时，请重试"
+                    e.message?.contains("SecurityException") == true -> "缺少网络权限，请检查AndroidManifest.xml"
+                    else -> "图像生成错误: ${e.message ?: e.javaClass.simpleName}"
+                }
+                
+                viewModelScope.launch {
+                    _effect.emit(ChatEffect.ShowToast(errorMsg))
+                }
+
+                _state.value = _state.value.copy(
+                    currentMessages = updatedMessages,
+                    isGeneratingImage = false,
+                    imageGenerationError = errorMsg
+                )
+            }
+        }
+    }
+
+    private fun updateImageGenerationResult(imageUrl: String?) {
+        _state.value = _state.value.copy(
+            generatedImageUrl = imageUrl,
+            isGeneratingImage = false
+        )
+    }
+
     private fun sendMessage(text: String) {
         if (text.isBlank()) {
             viewModelScope.launch {
@@ -215,6 +362,7 @@ class ChatViewModel (
 
         // 2. 创建assistant消息占位符（用于流式更新）
         val assistantMessageId = UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE
+        _state.value = _state.value.copy(streamingMessageId=assistantMessageId)
         val AssistantMessage = ChatMessage(
             messageId = assistantMessageId,
             text = "",
@@ -225,7 +373,7 @@ class ChatViewModel (
         val messagesWithPlaceholder = updatedMessages + AssistantMessage
         _state.value = _state.value.copy(
             currentMessages = messagesWithPlaceholder,
-            streamingMessageId = assistantMessageId,
+//            streamingMessageId = assistantMessageId,
             streamingContent = ""
         )
 
@@ -236,58 +384,74 @@ class ChatViewModel (
         viewModelScope.launch {
             try {
 //                sessionId?.let { repositoryHistory.saveMessage(sessionId, Message.User(text=text)) }
-                var accumulatedContent = ""
-
-                // 使用一个可变字符串来累积内容，避免重复复制
-        val contentBuilder = StringBuilder()
-        
-        repositoryAi.streamChat(
-            messages = updatedMessages, // 发送历史消息（包含刚添加的用户消息）
-        ).collect { token ->
-            /*collect会暂停当前协程，直到 streamChat 流发出第一个值。然后，它会为流中发出的每一个 token 执行 {} 中的代码块。
-            token: 每次循环接收到的单个字符串片段（例如一个字或一个词）。*/
-            //断点6：在这里设置断点，查看ViewModel接收到的每个token
-            // 在Debugger中查看：
-            //   - token: 单个token字符串
-            //   - contentBuilder: 累积的完整内容
-            Log.d(
-                "ChatViewModel",
-                "收到Token: '$token', 累积内容长度: ${contentBuilder.length}"
-            )
-
-            // 4. 实时更新流式内容（使用StringBuilder提高性能）
-            contentBuilder.append(token)
-            accumulatedContent = contentBuilder.toString()
-            
-            // 优化：一次性更新多个状态，减少状态更新次数
-            _state.value = _state.value.copy(
-                streamingContent = accumulatedContent,
-                // 5. 更新消息列表中的assistant消息内容（实时渲染）
-                currentMessages = _state.value.currentMessages.map { msg ->
-                    if (msg.messageId == assistantMessageId) {
-                        msg.copy(text = accumulatedContent)
-                    } else {
-                        msg
-                    }
-                }
-            )
+                repositoryAi.streamChat(
+                    messages = updatedMessages, // 发送历史消息（包含刚添加的用户消息）
+                ).collect { token ->
+                    /*collect会暂停当前协程，直到 streamChat 流发出第一个值。然后，它会为流中发出的每一个 token 执行 {} 中的代码块。
+                    token: 每次循环接收到的单个字符串片段（例如一个字或一个词）。*/
+                    //断点6：在这里设置断点，查看ViewModel接收到的每个token
+                    // 在Debugger中查看：
+                    //   - token: 单个token字符串
+                    
+                    // 4. 实时更新流式内容，实现打字效果
+                    _state.value = _state.value.copy(
+                        // 5. 直接将token添加到当前消息中，实现打字效果
+                        currentMessages = _state.value.currentMessages.map { msg ->
+                            if (msg.messageId == assistantMessageId) {
+                                // 将新收到的token直接添加到现有消息内容的末尾
+                                msg.copy(text = msg.text + token)
+                            } else {
+                                msg
+                            }
+                        }
+                    )
+                    
+                    // 记录token信息
+                    val currentAssistantMessage = _state.value.currentMessages.find { it.messageId == assistantMessageId }
+                    Log.d(
+                        "ChatViewModel",
+                        "收到Token: '$token', 当前消息长度: ${currentAssistantMessage?.text?.length ?: 0}"
+                    )
                 }
 
                 // 6. 流式接收完成，保存最终消息
+                // 从当前消息列表中获取完整的助手消息内容
+                val assistantMessageContent = _state.value.currentMessages.find { 
+                    it.messageId == assistantMessageId 
+                }?.text ?: ""
+                
                 val finalAssistantMessage = ChatMessage(
                     messageId = assistantMessageId,
-                    text = accumulatedContent,
+                    text = assistantMessageContent,
                     isFromUser = false,
                     role = MessageRole.Assistant
                 )
-
                 val finalMessages = updatedMessages + finalAssistantMessage
-                _state.value = _state.value.copy(
-                    currentMessages = finalMessages,
-                    isLoading = false,
-                    streamingMessageId = null,
-                    streamingContent = ""
-                )
+//                var isTyping by remember(message.messageId) {
+//                    mutableStateOf(false)
+//                }
+//                when(){
+//
+//                }
+                val lastMessage = _state.value.currentMessages.lastOrNull()
+                lastMessage?.isTyping?.let {
+                    if (!it){
+                        _state.value = _state.value.copy(
+                            currentMessages = finalMessages,
+                            isLoading = false,
+                            streamingMessageId = null,
+                            streamingContent = ""
+                        )
+                    }
+                }
+//                _state.value = _state.value.copy(
+//                    currentMessages = finalMessages,
+//                    isLoading = false,
+//                    streamingMessageId = null,
+//                    streamingContent = ""
+//                )
+
+
 
                 // 7. 更新会话消息（持久化存储）
                 updateSessionMessages(sessionId, finalMessages)
@@ -348,9 +512,10 @@ class ChatViewModel (
 
 
     private fun createNewSession() {
+        val sessionID = UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE
         val newSession = ChatSession(
 //            id = UUID.randomUUID().toString(),
-            sessionID = UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE,
+            sessionID = sessionID,
             title = "新对话",
 //            lastMessage = "",
             startTime = System.currentTimeMillis(),

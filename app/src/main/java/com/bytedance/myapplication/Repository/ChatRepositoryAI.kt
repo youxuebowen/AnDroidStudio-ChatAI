@@ -5,11 +5,14 @@ import com.bytedance.myapplication.data.MessageRole
 import com.bytedance.myapplication.Network.ApiClient
 import com.bytedance.myapplication.Network.ChatApiRequest
 import com.bytedance.myapplication.Network.ChatStreamChunk
+import com.bytedance.myapplication.Network.ImageGenerationApiRequest
+import com.bytedance.myapplication.Network.ImageGenerationApiResponse
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers // FIX: 用于 flowOn
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn // FIX
+import kotlinx.coroutines.withContext
 import android.util.Log
 import okhttp3.ResponseBody
 import retrofit2.HttpException
@@ -27,6 +30,7 @@ class ChatRepositoryAI {
     private val gson = Gson()
 
     private val systemPrompt = "你是一个有用的AI助手。"
+    private val defaultImageModel = "doubao-seedream-4-5-251128"
 
     /*这个函数会随时间流式地产生（发射）字符串（即 AI 回复的每个 token）*/
     fun streamChat(
@@ -180,6 +184,39 @@ class ChatRepositoryAI {
 
         // -------- FIX 7：流式网络必须在 IO 线程运行 --------
     }.flowOn(Dispatchers.IO)
+    
+    /**
+     * 生成图像
+     * @param prompt 图像生成提示词
+     * @param model 使用的模型，默认使用豆包的图像模型
+     * @return 图像生成响应
+     */
+    suspend fun generateImage(
+        prompt: String,
+        model: String = defaultImageModel
+    ): ImageGenerationApiResponse = withContext(Dispatchers.IO) {
+        try {
+            val request = ImageGenerationApiRequest(
+                model = model,
+                prompt = prompt,
+                size = "2K",
+                watermark = false
+            )
+            
+            val response = apiService.generateImage(request)
+            Log.d("ChatRepositoryAI", "图像生成成功: ${response.data.size}张图像")
+            response
+        } catch (e: HttpException) {
+            // HTTP错误处理
+            val errorBody = e.response()?.errorBody()?.string() ?: "无错误详情"
+            Log.e("ChatRepositoryAI", "图像生成HTTP错误: ${e.code()} - ${e.message()}")
+            Log.e("ChatRepositoryAI", "错误响应体: $errorBody")
+            throw ChatApiException("图像生成HTTP错误 ${e.code()}: ${e.message()}\n错误详情: $errorBody", e)
+        } catch (e: Exception) {
+            Log.e("ChatRepositoryAI", "图像生成失败: ${e.message}", e)
+            throw ChatApiException("图像生成失败: ${e.message}", e)
+        }
+    }
 }
 // 自定义异常类
 class ChatApiException(message: String, cause: Throwable? = null) : Exception(message, cause)
