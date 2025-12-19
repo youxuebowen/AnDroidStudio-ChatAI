@@ -95,8 +95,13 @@ fun ChatScreen(
                     },
                     onInfoClick = {
                         navController.navigate(Screen.Project.route)
+                    },
+                    onEnglishClick = {
+                        navController.navigate(Screen.English.route)
                     }
                 )
+
+
             },
             bottomBar = {
                 ChatInputBar(

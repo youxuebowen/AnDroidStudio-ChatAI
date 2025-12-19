@@ -121,6 +121,9 @@ class ChatViewModel (
             is ChatIntent.ToggleDrawer -> toggleDrawer() //打开侧边栏
             is ChatIntent.UpdateTypingStatus -> updateTypingStatus(intent.messageId, intent.isTyping)
             is ChatIntent.UpdateisLoading -> updateIsLoading(intent.isLoading)
+            // 图像生成相关意图处理
+            is ChatIntent.GenerateImage -> generateImage(intent.prompt)
+            is ChatIntent.UpdateImageGenerationResult -> updateImageGenerationResult(intent.imageUrl)
             else -> {}
         }
     }
@@ -187,6 +190,125 @@ class ChatViewModel (
             )
         }*/
     }
+
+    private fun generateImage(prompt: String) {
+        if (prompt.isBlank()) {
+            viewModelScope.launch {
+                _effect.emit(ChatEffect.ShowToast("图像生成提示不能为空"))
+            }
+            return
+        }
+
+        // 如果正在加载中，忽略新请求
+        if (_state.value.isGeneratingImage) {
+            return
+        }
+
+        var sessionId = _state.value.currentSessionId
+
+        if (sessionId == null) {
+            createNewSession()
+            sessionId = _state.value.currentSessionId!!
+        }
+
+        // 1. 添加用户图像生成请求到历史记录
+        val userMessage = ChatMessage(
+            messageId = UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE,
+            text = prompt,
+            isFromUser = true,
+            role = MessageRole.User
+        )
+
+        val updatedMessages = _state.value.currentMessages + userMessage
+        _state.value = _state.value.copy(
+            currentMessages = updatedMessages,
+            isGeneratingImage = true
+        )
+
+        updateSessionMessages(sessionId, updatedMessages)
+
+        // 2. 创建assistant消息占位符
+        val assistantMessageId = UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE
+        val assistantMessage = ChatMessage(
+            messageId = assistantMessageId,
+            text = "",
+            isFromUser = false,
+            role = MessageRole.Assistant
+        )
+
+        val messagesWithPlaceholder = updatedMessages + assistantMessage
+        _state.value = _state.value.copy(
+            currentMessages = messagesWithPlaceholder
+        )
+
+        // 3. 调用图像生成API
+        viewModelScope.launch {
+            try {
+                val imageResponse = repositoryAi.generateImage(prompt)
+                
+                // 4. 生成结果处理
+                val imageUrl = imageResponse.data.firstOrNull()?.url
+                
+                // 更新助手消息为图像URL
+                val finalAssistantMessage = assistantMessage.copy(
+                    text = imageUrl ?: "图像生成失败，未返回URL"
+                )
+                
+                val finalMessages = updatedMessages + finalAssistantMessage
+                _state.value = _state.value.copy(
+                    currentMessages = finalMessages,
+                    isGeneratingImage = false,
+                    generatedImageUrl = imageUrl
+                )
+
+                // 5. 更新会话消息（持久化存储）
+                updateSessionMessages(sessionId, finalMessages)
+                saveMessage(sessionId, finalMessages)
+
+            } catch (e: ChatApiException) {
+                // API调用失败
+                e.printStackTrace()
+                viewModelScope.launch {
+                    _effect.emit(ChatEffect.ShowToast("图像生成失败: ${e.message}"))
+                }
+
+                // 移除占位符消息
+                _state.value = _state.value.copy(
+                    currentMessages = updatedMessages,
+                    isGeneratingImage = false,
+                    imageGenerationError = e.message
+                )
+            } catch (e: Exception) {
+                // 其他异常
+                Log.e("ChatViewModel", "图像生成时发生异常", e)
+                
+                val errorMsg = when {
+                    e.message?.contains("Unable to resolve host") == true -> "网络连接失败，请检查网络"
+                    e.message?.contains("timeout") == true -> "请求超时，请重试"
+                    e.message?.contains("SecurityException") == true -> "缺少网络权限，请检查AndroidManifest.xml"
+                    else -> "图像生成错误: ${e.message ?: e.javaClass.simpleName}"
+                }
+                
+                viewModelScope.launch {
+                    _effect.emit(ChatEffect.ShowToast(errorMsg))
+                }
+
+                _state.value = _state.value.copy(
+                    currentMessages = updatedMessages,
+                    isGeneratingImage = false,
+                    imageGenerationError = errorMsg
+                )
+            }
+        }
+    }
+
+    private fun updateImageGenerationResult(imageUrl: String?) {
+        _state.value = _state.value.copy(
+            generatedImageUrl = imageUrl,
+            isGeneratingImage = false
+        )
+    }
+
     private fun sendMessage(text: String) {
         if (text.isBlank()) {
             viewModelScope.launch {

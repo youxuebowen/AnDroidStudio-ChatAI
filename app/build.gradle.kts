@@ -39,11 +39,7 @@ android {
     packaging {
         resources.excludes.add("META-INF/atomicfu.kotlin_module")
     }
-    // ←←← 新增这整段，解决报错的关键！！！
-//    ksp {
-//        jvmTarget = "17"
-//    }
-    
+
     // 自定义APK文件名
     applicationVariants.all {
         val variantName = name
@@ -97,8 +93,27 @@ dependencies {
     
     // Gson for JSON parsing
     implementation("com.google.code.gson:gson:2.10.1")
+    
+    // Coil for image loading in Compose
+    implementation("io.coil-kt:coil-compose:2.5.0")
+    // implementation("io.coil-kt:coil:2.4.0") // 移除重复/旧版本，coil-compose 已经包含了 coil
 
     // Debug
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    // 1. CameraX 相机库 (Kotlin DSL 写法修正)
+    val camerax_version = "1.3.0-beta01"
+    implementation("androidx.camera:camera-core:$camerax_version")
+    implementation("androidx.camera:camera-camera2:$camerax_version")
+    implementation("androidx.camera:camera-lifecycle:$camerax_version")
+    implementation("androidx.camera:camera-view:$camerax_version")
+
+    // 2. Google ML Kit - 图片标签识别 (离线版)
+    implementation("com.google.mlkit:image-labeling:17.0.7")
+    
+    // 权限管理 (推荐使用 Accompanist 库)
+    implementation("com.google.accompanist:accompanist-permissions:0.32.0")
+    
+    // 移除底部重复的依赖声明，因为上面已经声明了更新的版本 (如 Coroutines 1.7.3 > 1.7.1, OkHttp 4.12.0 > 4.11.0)
 }

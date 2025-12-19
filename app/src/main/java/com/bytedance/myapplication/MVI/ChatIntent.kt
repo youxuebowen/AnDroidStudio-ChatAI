@@ -27,4 +27,8 @@ sealed class ChatIntent {
     // 你以后还可以继续加
 //    data object LoadHistory : ChatIntent()          // 无参数意图
 //    data class DeleteMessage(val id: Long) : ChatIntent()
+    
+    // 图像生成相关意图
+    data class GenerateImage(val prompt: String) : ChatIntent()
+    data class UpdateImageGenerationResult(val imageUrl: String?) : ChatIntent()
 }

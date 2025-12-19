@@ -1,9 +1,12 @@
 package com.bytedance.myapplication.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberImagePainter
 import com.bytedance.myapplication.data.ChatMessage
 import com.bytedance.myapplication.MVI.ChatIntent
 import com.bytedance.myapplication.viewmodel.ChatViewModel
@@ -108,10 +112,15 @@ fun ChatMessageBubble(message: ChatMessage, streamingMessageId: Long? = null, vi
         }
     ) {
         // 获取屏幕宽度，让消息占更大比例
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val maxBubbleWidth = screenWidth * 0.9f // 消息最大宽度为屏幕宽度的80%
-    
-    Surface(
+        val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+        val maxBubbleWidth = screenWidth * 0.9f // 消息最大宽度为屏幕宽度的80%
+        
+        // 简单的图像URL检测函数
+        fun isImageUrl(text: String): Boolean {
+            return text.matches(Regex("^https?://.*\\.(jpg|jpeg|png|gif|bmp|webp|svg)$", RegexOption.IGNORE_CASE))
+        }
+
+        Surface(
             shape = RoundedCornerShape(
                 topStart = 16.dp,
                 topEnd = 16.dp,
@@ -125,8 +134,21 @@ fun ChatMessageBubble(message: ChatMessage, streamingMessageId: Long? = null, vi
             },
             modifier = Modifier.widthIn(max = maxBubbleWidth)
         ) {
-            // 打字机效果实现，传递streamingMessageId参数
-            AnimatedText(message = message, streamingMessageId = streamingMessageId, viewModel = viewModel )
+            // 检查是否是图像URL
+            if (isImageUrl(message.text)) {
+                // 显示图像
+                Image(
+                    painter = rememberImagePainter(message.text),
+                    contentDescription = "Generated image",
+                    modifier = Modifier
+                        .width(200.dp)
+                        .height(200.dp)
+                        .padding(12.dp)
+                )
+            } else {
+                // 打字机效果实现，传递streamingMessageId参数
+                AnimatedText(message = message, streamingMessageId = streamingMessageId, viewModel = viewModel )
+            }
         }
     }
 }

@@ -16,6 +16,7 @@ import com.bytedance.myapplication.viewmodel.ChatViewModel
 import com.bytedance.myapplication.viewmodel.SplashViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bytedance.myapplication.ui.ProjectScreen
+import com.bytedance.myapplication.ui.EnglishScreen
 
 @Composable
 fun WalkWinApp(viewModel:ChatViewModel) {                                   // ← 这就是你的 App 启动后显示的所有界面
@@ -64,6 +65,10 @@ fun WalkWinApp(viewModel:ChatViewModel) {                                   // �
             composable(Screen.Project.route){
                 ProjectScreen(chatViewModel= viewModel , navController = navController)
             }
+            composable(Screen.English.route){
+                EnglishScreen(navController = navController)
+            }
+
             // 你以后还可以在下面继续加：
             // composable("home") { HomeScreen() }
             // composable("profile") { ProfileScreen() }
