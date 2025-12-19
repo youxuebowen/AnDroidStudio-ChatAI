@@ -54,6 +54,7 @@ fun ProjectCard(item: Article, viewModel: ArticleViewModel, onConfirmSelect: (St
                 Text(
                     text = item.name as String,
                     fontSize = 18.sp,
+//                    maxLines = 5,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF333333)
                 )
@@ -67,7 +68,7 @@ fun ProjectCard(item: Article, viewModel: ArticleViewModel, onConfirmSelect: (St
                         text = contentText,
                         fontSize = 14.sp,
                         color = Color.Gray,
-                        maxLines = 3,
+                        maxLines = 10,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
