@@ -11,51 +11,86 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.bytedance.myapplication.R
+
 @Composable
 fun ControlButtons(
     capturedUri: Uri?,
     isAnalyzing: Boolean,
     onCaptureClick: () -> Unit,
     onResetClick: () -> Unit,
+    onExitClick: () -> Unit = {}, // 新增退出回调，默认为空
     modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
-        // 使用 LargeFloatingActionButton 或自定义 Button 实现大按钮效果
-        Button(
-            onClick = { if (capturedUri == null) onCaptureClick() else onResetClick() },
+        // 使用 Row 来横向排列：左侧退出按钮 - 中间拍照按钮 - 右侧退出按钮
+        Row(
             modifier = Modifier
-                .size(80.dp), // 设置较大的尺寸
-            shape = CircleShape, // 设置为正圆
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (capturedUri == null) Color.White else MaterialTheme.colorScheme.errorContainer,
-                contentColor = if (capturedUri == null) Color.Black else MaterialTheme.colorScheme.onErrorContainer
-            ),
-            contentPadding = PaddingValues(0.dp), // 消除内部默认边距，确保图标居中
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 60.dp), // 两侧留出间距
+            horizontalArrangement = Arrangement.SpaceBetween, // 按钮之间均匀分布
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            if (isAnalyzing) {
-                // 如果正在识别，显示加载动画
-                CircularProgressIndicator(
-                    modifier = Modifier.size(40.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    strokeWidth = 4.dp
-                )
-            } else {
-                // 根据状态显示不同的本地图标
-                val iconRes = if (capturedUri == null) {
-                    R.drawable.camera // 你本地的拍照图标
-                } else {
-                    R.drawable.camera // 你本地的重置/返回图标
-                }
-
+            // 左侧退出按钮
+            IconButton(
+                onClick = onExitClick,
+                modifier = Modifier.size(48.dp)
+            ) {
                 Icon(
-                    painter = painterResource(id = iconRes),
-                    contentDescription = if (capturedUri == null) "Capture" else "Reset",
-                    modifier = Modifier.size(42.dp), // 图标也相应放大
-                    tint = if (capturedUri == null) Color.Unspecified else Color.Red // 保持拍照图标原色或自定义
+                    painter = painterResource(id = R.drawable.icon_back), // 使用本地图片
+                    contentDescription = "Exit Left",
+                    tint = Color.Unspecified // 保持图片原色
+                )
+            }
+
+            // 中间的大按钮 (原有的拍照/重置按钮)
+            Button(
+                onClick = { if (capturedUri == null) onCaptureClick() else onResetClick() },
+                modifier = Modifier
+                    .size(80.dp), // 设置较大的尺寸
+                shape = CircleShape, // 设置为正圆
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (capturedUri == null) Color.White else MaterialTheme.colorScheme.errorContainer,
+                    contentColor = if (capturedUri == null) Color.Black else MaterialTheme.colorScheme.onErrorContainer
+                ),
+                contentPadding = PaddingValues(0.dp), // 消除内部默认边距，确保图标居中
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
+            ) {
+                if (isAnalyzing) {
+                    // 如果正在识别，显示加载动画
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(40.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        strokeWidth = 4.dp
+                    )
+                } else {
+                    // 根据状态显示不同的本地图标
+                    val iconRes = if (capturedUri == null) {
+                        R.drawable.camera // 你本地的拍照图标
+                    } else {
+                        R.drawable.icon_back // 你本地的重置/返回图标
+                    }
+
+                    Icon(
+                        painter = painterResource(id = iconRes),
+                        contentDescription = if (capturedUri == null) "Capture" else "Reset",
+                        modifier = Modifier.size(42.dp), // 图标也相应放大
+                        tint = if (capturedUri == null) Color.Unspecified else Color.Red // 保持拍照图标原色或自定义
+                    )
+                }
+            }
+
+            // 右侧退出按钮
+            IconButton(
+                onClick = onExitClick,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.icon_back), // 使用本地图片
+                    contentDescription = "Exit Right",
+                    tint = Color.Unspecified // 保持图片原色
                 )
             }
         }

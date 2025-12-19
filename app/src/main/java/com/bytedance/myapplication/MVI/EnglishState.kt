@@ -4,5 +4,6 @@ data class EnglishState(
     val capturedImageUri: Uri? = null,
     val recognizedWord: String = "",
     val isGeneratingAudio: Boolean = false,
-    val isAnalyzing: Boolean = false
+    val isAnalyzing: Boolean = false,
+    val isCameraOpen: Boolean = false,
 )
