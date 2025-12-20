@@ -11,5 +11,5 @@ data class ArticleListResponse(
 data class Article(
     val name: String?,  // 文章标题
     val url: String? ,// 文章URL链接
-    val content: String?
+    val description: String?
 )

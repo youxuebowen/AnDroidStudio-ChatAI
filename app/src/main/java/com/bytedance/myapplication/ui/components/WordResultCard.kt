@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun WordResultCard(
     word: String,               // 识别出的单词
+    wordCn : String,
     isGenerating: Boolean,      // 是否正在调用 Murf.ai 生成语音
     onPlayClick: () -> Unit,    // 点击播放的回调
     onResetClick: () -> Unit,   // 点击关闭/重置的回调
@@ -56,6 +57,16 @@ fun WordResultCard(
                 Text(
                     text = word,
                     fontSize = 36.sp, // 加大字号
+                    color = Color.White,
+                    fontWeight = FontWeight.ExtraBold,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 42.sp
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                // 中文单词显示
+                Text(
+                    text = wordCn,
+                    fontSize = 18.sp, // 加大字号
                     color = Color.White,
                     fontWeight = FontWeight.ExtraBold,
                     textAlign = TextAlign.Center,

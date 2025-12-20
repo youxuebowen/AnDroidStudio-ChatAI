@@ -13,11 +13,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.bytedance.myapplication.Repository.ChatRepositoryAI
 import com.bytedance.myapplication.Repository.ChatRepositoryHistory
+import com.bytedance.myapplication.Repository.EnglishRespositoryHistory
 import com.bytedance.myapplication.data.database.AppDatabase
 import com.bytedance.myapplication.ui.components.WalkWinApp
 import com.bytedance.myapplication.viewmodel.ChatViewModel
 import com.bytedance.myapplication.viewmodel.ChatViewModelFactory
 import com.bytedance.myapplication.ui.theme.WalkWinTheme
+import com.bytedance.myapplication.viewmodel.EnglishViewModel
+import com.bytedance.myapplication.viewmodel.EnglishViewModelFactory
 
 class MainActivity : ComponentActivity() {
     /*使用 lazy 委托来延迟初始化 AppDatabase、ChatRepositoryHistory 和 ChatRepositoryAI。这是一个很好的实践，
@@ -29,12 +32,18 @@ class MainActivity : ComponentActivity() {
     // Get a reference to the ChatRepository
     private val repositoryHistory by lazy { ChatRepositoryHistory(database.chatDao()) }
     private val repositoryAI by lazy { ChatRepositoryAI() }
+    private val englishRespositoryHistory by lazy { EnglishRespositoryHistory(database.englishDao()) }
 
     // Get the ViewModel, passing the factory
     private val viewModel: ChatViewModel by viewModels {
         // For now, we'll start a new chat by passing a null session ID.
         // In a real app, you would pass the ID of a chat to resume.
         ChatViewModelFactory(repositoryAI=repositoryAI, repositoryHistory=repositoryHistory,sessionId = null)
+    }
+    private val englishViewModel: EnglishViewModel by viewModels {
+        // For now, we'll start a new chat by passing a null session ID.
+        // In a real app, you would pass the ID of a chat to resume.
+        EnglishViewModelFactory(englishRespositoryHistory, application)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,7 +57,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background // 使用主题背景色
                 ) {
-                    WalkWinApp(viewModel)
+                    WalkWinApp(viewModel,englishViewModel)
                 }
             }
 //            ChatAppTheme {

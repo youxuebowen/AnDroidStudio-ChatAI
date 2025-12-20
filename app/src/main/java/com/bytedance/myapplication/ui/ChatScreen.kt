@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.bytedance.myapplication.MVI.ChatEffect
@@ -104,6 +105,7 @@ fun ChatScreen(
 
             },
             bottomBar = {
+                val keyboardController = LocalSoftwareKeyboardController.current
                 ChatInputBar(
                     inputText = state.inputText,
                     onTextChange = {
@@ -111,6 +113,7 @@ fun ChatScreen(
                     },
                     onSendClick = {
                         viewModel.handleIntent(ChatIntent.SendMessage(state.inputText))
+                        keyboardController?.hide() // 隐藏键盘
                     }
                 )
             }

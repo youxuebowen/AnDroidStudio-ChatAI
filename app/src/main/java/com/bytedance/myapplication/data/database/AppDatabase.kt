@@ -6,10 +6,16 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import android.util.Log
 /*我要创建一个叫 AppDatabase 的数据库，它包含哪些表、版本号是多少、是否导出 schema”。*/
-@Database(entities = [ChatSessionEntity::class, ChatMessageEntity::class, UserEntity::class],
-    version = 1, exportSchema = false)
+//增加英语识别的表，总共四张表
+@Database(entities = [
+    ChatSessionEntity::class,
+    ChatMessageEntity::class,
+    UserEntity::class,
+    EnglishEntity::class],
+    version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun chatDao(): ChatDao
+    abstract fun englishDao(): EnglishDao
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
@@ -21,6 +27,7 @@ abstract class AppDatabase : RoomDatabase() {
                         context.applicationContext,
                         AppDatabase::class.java,
                         "chat_history_database"
+                        // 数据库文件名保持不变
                     )
                         .fallbackToDestructiveMigration()
                         .build()

@@ -89,12 +89,12 @@ class ArticleViewModel : ViewModel() {
      * @return 当前选中文章的URL，如果没有选中则返回null
      */
     fun confirmSelection(): String? {
-        val content = (_projectState.value.currentArticle?.content ?: String())
+        val description = (_projectState.value.currentArticle?.description ?: String())
         _projectState.update { it.copy(selectedArticleId = "") }
         _projectState.update { it.copy(currentArticle = null) }
         _projectState.update { it.copy(showDialog = false) }
 
             // 重置状态
-        return content
+        return description
     }
 }
