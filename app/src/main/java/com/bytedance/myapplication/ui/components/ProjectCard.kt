@@ -62,13 +62,13 @@ fun ProjectCard(item: Article, viewModel: ArticleViewModel, onConfirmSelect: (St
                 Spacer(modifier = Modifier.height(6.dp))
 
                 // URL 显示 (灰色，单行，过长省略)
-                val contentText = item.content as? String
+                val contentText = item.description as? String
                 if (!contentText.isNullOrEmpty()) {
                     Text(
                         text = contentText,
                         fontSize = 14.sp,
                         color = Color.Gray,
-                        maxLines = 10,
+//                        maxLines = 10,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
