@@ -14,12 +14,14 @@ import androidx.compose.ui.layout.ScaleFactor
 import com.bytedance.myapplication.ui.ChatScreen
 import com.bytedance.myapplication.viewmodel.ChatViewModel
 import com.bytedance.myapplication.viewmodel.SplashViewModel
+import com.bytedance.myapplication.viewmodel.EnglishViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bytedance.myapplication.ui.ProjectScreen
 import com.bytedance.myapplication.ui.EnglishScreen
+import com.bytedance.myapplication.ui.ReviewScreen
 
 @Composable
-fun WalkWinApp(viewModel:ChatViewModel) {                                   // ← 这就是你的 App 启动后显示的所有界面
+fun WalkWinApp(viewModel:ChatViewModel,englishViewmodel:EnglishViewModel) {                                   // ← 这就是你的 App 启动后显示的所有界面
     val navController = rememberNavController()     // ← 导航控制器（相当于一个遥控器）
     var isSplashFinished by remember { mutableStateOf(false) }
     if (!isSplashFinished) {
@@ -66,7 +68,10 @@ fun WalkWinApp(viewModel:ChatViewModel) {                                   // �
                 ProjectScreen(chatViewModel= viewModel , navController = navController)
             }
             composable(Screen.English.route){
-                EnglishScreen(navController = navController)
+                EnglishScreen(viewModel = englishViewmodel,navController = navController)
+            }
+            composable(Screen.Review.route){
+                ReviewScreen(viewModel = englishViewmodel,navController = navController)
             }
 
             // 你以后还可以在下面继续加：

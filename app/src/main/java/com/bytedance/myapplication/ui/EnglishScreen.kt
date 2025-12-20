@@ -97,8 +97,9 @@ fun EnglishScreen(viewModel: EnglishViewModel = viewModel(), navController: NavC
                     if (uiState.recognizedWord.isNotEmpty()) {
                         WordResultCard(
                             word = uiState.recognizedWord,
+                            wordCn = uiState.recognizedCn,
                             isGenerating = uiState.isGeneratingAudio,
-                            onPlayClick = { viewModel.playAudio(uiState.recognizedWord, context) },
+                            onPlayClick = { viewModel.playAudioByPath(uiState.voiceUri) },
                             onResetClick = { viewModel.reset() },
                             modifier = Modifier.align(Alignment.Center)
                         )
